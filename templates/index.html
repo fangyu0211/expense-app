@@ -1,10 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>大學生消費分析平台</title>
+    <title>消費分析平台</title>
 </head>
 <body>
-    <h1>大學生消費分析平台</h1>
-    <p>我的第一個 Flask 專案！</p>
+
+<h1>💰 大學生消費分析平台</h1>
+
+<h2>新增消費</h2>
+
+<form action="/add" method="POST">
+    金額：<input name="amount" type="number" required><br>
+    類別：
+    <select name="category">
+        <option>飲食</option>
+        <option>交通</option>
+        <option>娛樂</option>
+        <option>購物</option>
+        <option>其他</option>
+    </select><br>
+
+    日期：<input name="date" type="date" required><br>
+    備註：<input name="note"><br>
+
+    <button type="submit">新增</button>
+</form>
+
+
+<hr>
+
+<h2>消費紀錄</h2>
+
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>金額</th>
+        <th>類別</th>
+        <th>日期</th>
+        <th>備註</th>
+    </tr>
+
+    {% for row in data %}
+    <tr>
+        <td>{{ row[0] }}</td>
+        <td>{{ row[1] }}</td>
+        <td>{{ row[2] }}</td>
+        <td>{{ row[3] }}</td>
+        <td>{{ row[4] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+<h2>💰 總支出：{{ total }} 元</h2>
+
+<h2>📊 分類統計</h2>
+
+<ul>
+    {% for category, amount in category_stats %}
+        <li>{{ category }}：{{ amount }} 元</li>
+    {% endfor %}
+</ul>
+
 </body>
 </html>
