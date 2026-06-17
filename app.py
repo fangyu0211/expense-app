@@ -76,5 +76,50 @@ def add():
 
     return redirect('/')
 
+@app.route("/delete/<int:id>")
+def delete(id):
+    conn = sqlite3.connect("expense.db")
+    c = conn.cursor()
+
+    c.execute("DELETE FROM expense WHERE id = ?", (id,))
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/")
+
+@app.route("/edit/<int:id>")
+def edit(id):
+    conn = sqlite3.connect("expense.db")
+    c = conn.cursor()
+
+    c.execute("SELECT * FROM expense WHERE id = ?", (id,))
+    row = c.fetchone()
+
+    conn.close()
+
+    return render_template("edit.html", row=row)
+
+@app.route("/update/<int:id>", methods=["POST"])
+def update(id):
+    amount = request.form["amount"]
+    category = request.form["category"]
+    date = request.form["date"]
+    note = request.form["note"]
+
+    conn = sqlite3.connect("expense.db")
+    c = conn.cursor()
+
+    c.execute("""
+        UPDATE expense
+        SET amount = ?, category = ?, date = ?, note = ?
+        WHERE id = ?
+    """, (amount, category, date, note, id))
+
+    conn.commit()
+    conn.close()
+
+    return redirect("/")
+
 if __name__ == "__main__":
     app.run(debug=True)

@@ -2,42 +2,62 @@
 <html>
 <head>
     <title>消費分析平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
 
-<h1>💰 大學生消費分析平台</h1>
+<body class="bg-light">
+<div class="container mt-4">
 
-<h2>新增消費</h2>
+<h1 class="text-center mb-4">💰 大學生消費分析平台</h1>
 
-<form action="/add" method="POST">
-    金額：<input name="amount" type="number" required><br>
-    類別：
-    <select name="category">
-        <option>飲食</option>
-        <option>交通</option>
-        <option>娛樂</option>
-        <option>購物</option>
-        <option>其他</option>
-    </select><br>
+<div class="card p-3 mb-4 shadow-sm">
+<h4>新增消費</h4>
 
-    日期：<input name="date" type="date" required><br>
-    備註：<input name="note"><br>
+<form action="/add" method="POST" class="row g-2">
 
-    <button type="submit">新增</button>
+    <div class="col-md-3">
+        <input name="amount" type="number" class="form-control" placeholder="金額" required>
+    </div>
+
+    <div class="col-md-2">
+        <select name="category" class="form-control">
+            <option>飲食</option>
+            <option>交通</option>
+            <option>娛樂</option>
+            <option>購物</option>
+            <option>其他</option>
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <input name="date" type="date" class="form-control" required>
+    </div>
+
+    <div class="col-md-3">
+        <input name="note" class="form-control" placeholder="備註">
+    </div>
+
+    <div class="col-md-1">
+        <button class="btn btn-primary w-100">新增</button>
+    </div>
+
 </form>
+</div>
 
 
 <hr>
 
-<h2>消費紀錄</h2>
+<div class="card p-3 shadow-sm">
+<h5>消費紀錄</h5>
 
-<table border="1">
+<table class="table table-striped table-hover">
     <tr>
         <th>ID</th>
         <th>金額</th>
         <th>類別</th>
         <th>日期</th>
         <th>備註</th>
+        <th>操作</th>
     </tr>
 
     {% for row in data %}
@@ -47,18 +67,75 @@
         <td>{{ row[2] }}</td>
         <td>{{ row[3] }}</td>
         <td>{{ row[4] }}</td>
+        <td>
+            <a class="btn btn-sm btn-warning" href="/edit/{{ row[0] }}">修改</a>
+            <a class="btn btn-sm btn-danger" href="/delete/{{ row[0] }}" onclick="return confirm('確定刪除？')">刪除</a>
+        </td>
     </tr>
     {% endfor %}
 </table>
-<h2>💰 總支出：{{ total }} 元</h2>
+</div>
 
-<h2>📊 分類統計</h2>
+<div class="row mb-3">
 
-<ul>
-    {% for category, amount in category_stats %}
-        <li>{{ category }}：{{ amount }} 元</li>
-    {% endfor %}
-</ul>
+    <div class="col-md-6">
+        <div class="card p-3 shadow-sm">
+            <h5>💰 總支出</h5>
+            <h3 class="text-danger">{{ total }} 元</h3>
+        </div>
+    </div>
 
+    <div class="col-md-6">
+        <div class="card p-3 shadow-sm">
+            <h5>📊 分類統計</h5>
+
+            <ul class="list-group list-group-flush">
+                {% for category, amount in category_stats %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>{{ category }}</span>
+                    <span>{{ amount }} 元</span>
+                </li>
+                {% endfor %}
+            </ul>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="card p-3 mt-4 shadow-sm">
+    <h5>📈 消費類別分布</h5>
+    <canvas id="expenseChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const labels = [
+        {% for category, amount in category_stats %}
+            "{{ category }}",
+        {% endfor %}
+    ];
+
+    const amounts = [
+        {% for category, amount in category_stats %}
+            {{ amount }},
+        {% endfor %}
+    ];
+
+    const ctx = document.getElementById('expenseChart');
+
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '消費金額',
+                data: amounts
+            }]
+        }
+    });
+</script>
+
+</div>
 </body>
 </html>
