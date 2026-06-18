@@ -63,13 +63,22 @@
     {% for row in data %}
     <tr>
         <td>{{ row[0] }}</td>
-        <td>{{ row[1] }}</td>
         <td>{{ row[2] }}</td>
         <td>{{ row[3] }}</td>
         <td>{{ row[4] }}</td>
+        <td>{{ row[5] }}</td>
+
         <td>
-            <a class="btn btn-sm btn-warning" href="/edit/{{ row[0] }}">修改</a>
-            <a class="btn btn-sm btn-danger" href="/delete/{{ row[0] }}" onclick="return confirm('確定刪除？')">刪除</a>
+            <a class="btn btn-sm btn-warning"
+            href="/edit/{{ row[0] }}">
+            修改
+            </a>
+
+            <a class="btn btn-sm btn-danger"
+            href="/delete/{{ row[0] }}"
+            onclick="return confirm('確定刪除？')">
+            刪除
+            </a>
         </td>
     </tr>
     {% endfor %}

@@ -23,7 +23,7 @@
             <div class="mb-3">
                 <label class="form-label">金額</label>
                 <input name="amount" type="number" class="form-control"
-                       value="{{ row[1] }}" required>
+                       value="{{ row[2] }}" required>
             </div>
 
             <!-- 類別 -->
@@ -31,11 +31,11 @@
                 <label class="form-label">類別</label>
                 <select name="category" class="form-control">
 
-                    <option {% if row[2] == '飲食' %}selected{% endif %}>飲食</option>
-                    <option {% if row[2] == '交通' %}selected{% endif %}>交通</option>
-                    <option {% if row[2] == '娛樂' %}selected{% endif %}>娛樂</option>
-                    <option {% if row[2] == '購物' %}selected{% endif %}>購物</option>
-                    <option {% if row[2] == '其他' %}selected{% endif %}>其他</option>
+                    <option {% if row[3] == '飲食' %}selected{% endif %}>飲食</option>
+                    <option {% if row[3] == '交通' %}selected{% endif %}>交通</option>
+                    <option {% if row[3] == '娛樂' %}selected{% endif %}>娛樂</option>
+                    <option {% if row[3] == '購物' %}selected{% endif %}>購物</option>
+                    <option {% if row[3] == '其他' %}selected{% endif %}>其他</option>
 
                 </select>
             </div>
@@ -44,14 +44,14 @@
             <div class="mb-3">
                 <label class="form-label">日期</label>
                 <input name="date" type="date" class="form-control"
-                       value="{{ row[3] }}" required>
+                       value="{{ row[4] }}" required>
             </div>
 
             <!-- 備註 -->
             <div class="mb-3">
                 <label class="form-label">備註</label>
                 <input name="note" class="form-control"
-                       value="{{ row[4] }}">
+                       value="{{ row[5] }}">    
             </div>
 
             <!-- 按鈕 -->
