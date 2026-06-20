@@ -1,5 +1,7 @@
-from flask import Flask, render_template, request, redirect, session
+from flask import Flask, render_template, request, redirect, session, send_file
 import sqlite3
+from flask import send_file
+import pandas as pd
 
 app = Flask(__name__)
 app.secret_key = "123456"
@@ -65,13 +67,78 @@ def index():
     """, (session["user_id"],))
     category_stats = c.fetchall()
 
+    c.execute("""
+        SELECT
+            substr(date,1,7) as month,
+            SUM(amount)
+        FROM expense
+        WHERE user_id=?
+        GROUP BY month
+        ORDER BY month
+        """, (session["user_id"],))
+    monthly_stats = c.fetchall()
+
+    c.execute(
+        "SELECT COUNT(*) FROM expense WHERE user_id=?",
+        (session["user_id"],)
+    )
+    expense_count = c.fetchone()[0]
+
+    c.execute(
+        "SELECT AVG(amount) FROM expense WHERE user_id=?",
+        (session["user_id"],)
+    )
+
+    avg_amount = c.fetchone()[0]
+
+    if avg_amount is None:
+        avg_amount = 0
+    else:
+        avg_amount = round(avg_amount, 2)
+
+    c.execute("""
+        SELECT category, SUM(amount) as total
+        FROM expense
+        WHERE user_id=?
+        GROUP BY category
+        ORDER BY total DESC
+        LIMIT 1
+        """, (session["user_id"],))
+
+    top_category = c.fetchone()
+    if top_category:
+        top_category = top_category[0]
+    else:
+        top_category = "無資料"
+        
+    c.execute("""
+        SELECT
+            substr(date,1,7) as month,
+            SUM(amount) as total
+        FROM expense
+        WHERE user_id=?
+        GROUP BY month
+        ORDER BY total DESC
+        LIMIT 1
+        """, (session["user_id"],))
+
+    top_month = c.fetchone()
+    if top_month:
+        top_month = top_month[0]
+    else:
+        top_month = "無資料"
     conn.close()
 
     return render_template(
         "index.html",
         data=data,
         total=total,
-        category_stats=category_stats
+        category_stats=category_stats,
+        monthly_stats=monthly_stats,
+        expense_count=expense_count,
+        avg_amount=avg_amount,
+        top_category=top_category,
+        top_month=top_month
     )
 
 @app.route('/add', methods=['POST'])
@@ -210,6 +277,45 @@ def logout():
     session.pop("user", None)
     session.pop("user_id", None)
     return redirect("/login")
+
+@app.route("/export")
+def export():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    conn = sqlite3.connect("expense.db")
+
+    query = """
+    SELECT
+        amount AS 金額,
+        category AS 類別,
+        date AS 日期,
+        note AS 備註
+    FROM expense
+    WHERE user_id=?
+    """
+
+    df = pd.read_sql_query(
+        query,
+        conn,
+        params=(session["user_id"],)
+    )
+
+    conn.close()
+
+    filename = f"{session['user']}_expenses.csv"
+
+    df.to_csv(
+        filename,
+        index=False,
+        encoding="utf-8-sig"
+    )
+
+    return send_file(
+        filename,
+        as_attachment=True
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
