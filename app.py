@@ -1,12 +1,11 @@
 from flask import Flask, render_template, request, redirect, session, send_file
 import sqlite3
-from flask import send_file
 import pandas as pd
 
 app = Flask(__name__)
 app.secret_key = "123456"
 
-# 建立資料庫（只會第一次建立）
+# 建立資料庫
 def init_db():
     conn = sqlite3.connect("expense.db")
     c = conn.cursor()
@@ -21,6 +20,7 @@ def init_db():
             note TEXT
         )
     """)
+
     c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -38,57 +38,91 @@ init_db()
 def index():
     if "user" not in session:
         return redirect("/login")
+    
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
+    where_clause = "WHERE user_id=?"
+    params = [session["user_id"]]
+
+    if start_date:
+        where_clause += " AND date >= ?"
+        params.append(start_date)
+    if end_date:
+        where_clause += " AND date <= ?"
+        params.append(end_date)
+    
     conn = sqlite3.connect("expense.db")
     c = conn.cursor()
 
     # 取得所有資料
-    c.execute(
-        "SELECT * FROM expense WHERE user_id=? ORDER BY id DESC",
-        (session["user_id"],)
-    )
+    query = f"""
+    SELECT *
+    FROM expense
+    {where_clause}
+    ORDER BY id DESC
+    """
+    c.execute(query, params)
     data = c.fetchall()
 
     # 計算總支出
-    c.execute(
-        "SELECT SUM(amount) FROM expense WHERE user_id=?",
-        (session["user_id"],)
-    )
+    query = f"""
+    SELECT SUM(amount)
+    FROM expense
+    {where_clause}
+    """
+    c.execute(query, params)
     total = c.fetchone()[0]
 
     if total is None:
         total = 0
 
     # 分類統計
-    c.execute("""
-        SELECT category, SUM(amount)
-        FROM expense
-        WHERE user_id=?
-        GROUP BY category
-    """, (session["user_id"],))
+    query = f"""
+    SELECT category, SUM(amount)
+    FROM expense
+    {where_clause}
+    GROUP BY category
+    """
+    c.execute(query, params)
     category_stats = c.fetchall()
 
-    c.execute("""
-        SELECT
-            substr(date,1,7) as month,
-            SUM(amount)
-        FROM expense
-        WHERE user_id=?
-        GROUP BY month
-        ORDER BY month
-        """, (session["user_id"],))
+    c.execute(f"""
+    SELECT category, SUM(amount) as total
+    FROM expense
+    {where_clause}
+    GROUP BY category
+    ORDER BY total DESC
+    LIMIT 3
+    """, params)
+
+    top_categories = c.fetchall()
+
+    query = f"""
+    SELECT
+        substr(date,1,7),
+        SUM(amount)
+    FROM expense
+    {where_clause}
+    GROUP BY substr(date,1,7)
+    ORDER BY substr(date,1,7)
+    """
+    c.execute(query, params)
     monthly_stats = c.fetchall()
 
-    c.execute(
-        "SELECT COUNT(*) FROM expense WHERE user_id=?",
-        (session["user_id"],)
-    )
+    query = f"""
+    SELECT COUNT(*)
+    FROM expense
+    {where_clause}
+    """
+    c.execute(query, params)
     expense_count = c.fetchone()[0]
 
-    c.execute(
-        "SELECT AVG(amount) FROM expense WHERE user_id=?",
-        (session["user_id"],)
-    )
-
+    query = f"""
+    SELECT AVG(amount)
+    FROM expense
+    {where_clause}
+    """
+    c.execute(query, params)
     avg_amount = c.fetchone()[0]
 
     if avg_amount is None:
@@ -96,32 +130,32 @@ def index():
     else:
         avg_amount = round(avg_amount, 2)
 
-    c.execute("""
-        SELECT category, SUM(amount) as total
-        FROM expense
-        WHERE user_id=?
-        GROUP BY category
-        ORDER BY total DESC
-        LIMIT 1
-        """, (session["user_id"],))
-
+    query = f"""
+    SELECT category, SUM(amount) as total
+    FROM expense
+    {where_clause}
+    GROUP BY category
+    ORDER BY total DESC
+    LIMIT 1
+    """
+    c.execute(query, params)
     top_category = c.fetchone()
     if top_category:
         top_category = top_category[0]
     else:
         top_category = "無資料"
         
-    c.execute("""
-        SELECT
-            substr(date,1,7) as month,
-            SUM(amount) as total
-        FROM expense
-        WHERE user_id=?
-        GROUP BY month
-        ORDER BY total DESC
-        LIMIT 1
-        """, (session["user_id"],))
-
+    query = f"""
+    SELECT
+        substr(date,1,7) as month,
+        SUM(amount) as total
+    FROM expense
+    {where_clause}
+    GROUP BY month
+    ORDER BY total DESC
+    LIMIT 1
+    """
+    c.execute(query, params)
     top_month = c.fetchone()
     if top_month:
         top_month = top_month[0]
@@ -138,7 +172,10 @@ def index():
         expense_count=expense_count,
         avg_amount=avg_amount,
         top_category=top_category,
-        top_month=top_month
+        top_month=top_month,
+        top_categories=top_categories,
+        start_date=start_date,
+        end_date=end_date
     )
 
 @app.route('/add', methods=['POST'])
