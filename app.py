@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, session, send_file
 import sqlite3
 import pandas as pd
+from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash
 
 app = Flask(__name__)
 app.secret_key = "123456"
@@ -334,7 +336,9 @@ def update(id):
 def register():
     if request.method == "POST":
         username = request.form["username"]
-        password = request.form["password"]
+        password = generate_password_hash(
+            request.form["password"]
+        )
 
         conn = sqlite3.connect("expense.db")
         c = conn.cursor()
@@ -358,15 +362,17 @@ def login():
         conn = sqlite3.connect("expense.db")
         c = conn.cursor()
 
-        c.execute("SELECT * FROM users WHERE username=? AND password=?",
-                  (username, password))
+        c.execute(
+            "SELECT * FROM users WHERE username=?",
+            (username,)
+        )
 
         user = c.fetchone()
         conn.close()
+        if user and check_password_hash(user[2], password):
 
-        if user:
-            session["user"] = username
-            session["user_id"] = user[0]
+            session["user"]=username
+            session["user_id"]=user[0]
 
             return redirect("/")
         else:
