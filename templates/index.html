@@ -10,88 +10,312 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
 
-    <h1>💰 大學生消費分析平台</h1>
+    <div>
+
+        <h2 class="fw-bold">
+            💰 Student Expense Dashboard
+        </h2>
+        <hr class="mb-4">
+
+        <p class="text-muted mb-0">
+            Personal Expense Analysis System
+        </p>
+
+    </div>
 
     <div>
-        <span class="me-3">
+
+        <span class="fw-bold me-3">
             👤 {{ session["user"] }}
         </span>
 
-        <a href="/export" class="btn btn-success me-2">
-        匯出CSV
+        <a href="/export" class="btn btn-success">
+            匯出CSV
+        </a>
+
+        <a href="/budget" class="btn btn-warning">
+            預算
         </a>
 
         <a href="/logout" class="btn btn-outline-danger">
-        登出
+            登出
         </a>
+
+    </div>
+
+</div>
+
+<div class="card p-3 mt-4 shadow-sm">
+
+    <h5>💰 本月預算</h5>
+
+    <div class="d-flex justify-content-between">
+
+        <span>
+            已花費
+        </span>
+
+        <span class="fw-bold">
+            {{ total }} / {{ budget }} 元
+        </span>
+
+    </div>
+
+    <div class="progress mt-2">
+
+        <div
+            class="progress-bar bg-success"
+            style="width: {{ budget_percent }}%">
+
+            {{ budget_percent }}%
+
+        </div>
+
+    </div>
+</div>
+
+<div class="row mt-4">
+
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm text-center p-3 h-100">
+            <h6>💰 總支出</h6>
+            <h1 class="display-5 text-danger">{{ total }}</h1>
+            <small>元</small>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm text-center p-3 h-100">
+            <h6>📝 消費筆數</h6>
+            <h1 class="display-5 text-success">{{ expense_count }}</h1>
+            <small>筆</small>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm text-center p-3 h-100">
+            <h6>📊 平均消費</h6>
+            <h1 class="display-5 text-primary">{{ avg_amount }}</h1>
+            <small>元</small>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm text-center p-3 h-100">
+            <h6>🏆 最高消費類別</h6>
+            <h1 class="display-5 text-warning">{{ top_category }}</h1>
+        </div>
+    </div>
+
+</div>
+
+<div class="row mt-4">
+
+    <div class="col-lg-8">
+
+        <div class="card shadow-sm p-4 h-100">
+
+            <h5>📈 每月消費趨勢</h5>
+
+            <canvas id="monthlyChart"></canvas>
+
+        </div>
+
+    </div>
+
+    <div class="col-lg-4">
+
+        <div class="card shadow-sm p-4 h-100">
+
+            <h5>🥧 消費比例</h5>
+
+            <canvas id="expenseChart"></canvas>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="row mt-4">
+
+    <!-- 左邊：分類統計 -->
+    <div class="col-lg-6">
+
+        <div class="card shadow-sm h-100">
+
+            <div class="card-body">
+
+                <h5>📊 分類統計</h5>
+
+                <ul class="list-group list-group-flush">
+
+                    {% for category, amount in category_stats %}
+
+                    <li class="list-group-item d-flex justify-content-between">
+
+                        <span>{{ category }}</span>
+
+                        <span class="fw-bold text-primary">
+                            {{ amount }} 元
+                        </span>
+
+                    </li>
+
+                    {% endfor %}
+
+                </ul>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- 右邊：Top3 -->
+    <div class="col-lg-6">
+
+        <div class="card shadow-sm h-100">
+
+            <div class="card-body">
+
+                <h5>🏆 Top 3 消費類別</h5>
+
+                <ul class="list-group list-group-flush">
+
+                    {% for category, total in top_categories %}
+
+                    <li class="list-group-item d-flex justify-content-between">
+
+                        <span>{{ category }}</span>
+
+                        <span class="badge bg-success rounded-pill">
+                            {{ total }} 元
+                        </span>
+
+                    </li>
+
+                    {% endfor %}
+
+                </ul>
+
+            </div>
+
+        </div>
+
     </div>
 
 </div>
 
 <div class="card p-3 mb-4 shadow-sm">
-<h4>新增消費</h4>
 
-<form action="/add" method="POST" class="row g-2">
-
-    <div class="col-md-3">
-        <input name="amount" type="number" class="form-control" placeholder="金額" required>
-    </div>
-
-    <div class="col-md-2">
-        <select name="category" class="form-control">
-            <option>飲食</option>
-            <option>交通</option>
-            <option>娛樂</option>
-            <option>購物</option>
-            <option>其他</option>
-        </select>
-    </div>
-
-    <div class="col-md-3">
-        <input name="date" type="date" class="form-control" required>
-    </div>
-
-    <div class="col-md-3">
-        <input name="note" class="form-control" placeholder="備註">
-    </div>
-
-    <div class="col-md-1">
-        <button class="btn btn-primary w-100">新增</button>
-    </div>
-
-</form>
-</div>
-
-<div class="card p-3 mb-4 shadow-sm">
-
-    <h5>🔍 日期篩選</h5>
+    <h5>🔍 篩選</h5>
 
     <form method="GET" action="/">
 
-        <div class="row">
+        <div class="row g-2">
 
-            <div class="col-md-4">
+            <!-- 開始日期 -->
+            <div class="col-md-2">
                 <input
                     type="date"
                     name="start_date"
                     class="form-control"
-                    value="{{ start_date }}"
-                >
+                    value="{{ start_date }}">
             </div>
 
-            <div class="col-md-4">
+            <!-- 結束日期 -->
+            <div class="col-md-2">
                 <input
                     type="date"
                     name="end_date"
                     class="form-control"
-                    value="{{ end_date }}"
-                >
+                    value="{{ end_date }}">
             </div>
 
-            <div class="col-md-4">
-                <button class="btn btn-primary">
+            <!-- 關鍵字 -->
+            <div class="col-md-3">
+                <input
+                    type="text"
+                    name="keyword"
+                    class="form-control"
+                    placeholder="搜尋備註..."
+                    value="{{ keyword or '' }}">
+            </div>
+
+            <!-- 類別 -->
+            <div class="col-md-2">
+                <select name="category" class="form-select">
+
+                    <option>全部</option>
+
+                    <option
+                    {% if category=="飲食" %}selected{% endif %}>
+                    飲食
+                    </option>
+
+                    <option
+                    {% if category=="交通" %}selected{% endif %}>
+                    交通
+                    </option>
+
+                    <option
+                    {% if category=="娛樂" %}selected{% endif %}>
+                    娛樂
+                    </option>
+
+                    <option
+                    {% if category=="購物" %}selected{% endif %}>
+                    購物
+                    </option>
+
+                    <option
+                    {% if category=="其他" %}selected{% endif %}>
+                    其他
+                    </option>
+
+                </select>
+            </div>
+
+            <!-- 排序 -->
+            <div class="col-md-2">
+
+                <select
+                    name="sort"
+                    class="form-select">
+
+                    <option value="">預設排序</option>
+
+                    <option value="amount_desc">
+                        金額(高→低)
+                    </option>
+
+                    <option value="amount_asc">
+                        金額(低→高)
+                    </option>
+
+                    <option value="date_desc">
+                        日期(新→舊)
+                    </option>
+
+                    <option value="date_asc">
+                        日期(舊→新)
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- 查詢按鈕 -->
+            <div class="col-md-1">
+
+                <button
+                    class="btn btn-primary w-100">
+
                     查詢
+
                 </button>
+
             </div>
 
         </div>
@@ -100,28 +324,63 @@
 
 </div>
 
+<div class="card p-3 mb-4 shadow-sm">
+<h4>新增消費</h4>
+
+<form action="/add" method="POST" class="row g-2">
+    <div class="row">
+        <div class="col-md-6">
+            <input name="amount" type="number" class="form-control" placeholder="金額" required>
+        </div>
+
+        <div class="col-md-6">
+            <select name="category" class="form-control">
+                <option>飲食</option>
+                <option>交通</option>
+                <option>娛樂</option>
+                <option>購物</option>
+                <option>其他</option>
+            </select>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col-md-6">
+            <input name="date" type="date" class="form-control" required>
+        </div>
+
+        <div class="col-md-6">
+            <input name="note" class="form-control" placeholder="備註">
+        </div>
+
+        <div class="col-md-1">
+            <button class="btn btn-primary mt-3 w-100">新增消費</button>
+        </div>
+    </div>
+</form>
+</div>
+
 
 <hr>
 
 <div class="card p-3 shadow-sm">
 <h5>消費紀錄</h5>
 
-<table class="table table-striped table-hover">
+<table class="table table-hover align-middle">
+<thead class="table-light">
     <tr>
-        <th>ID</th>
         <th>金額</th>
         <th>類別</th>
         <th>日期</th>
         <th>備註</th>
         <th>操作</th>
     </tr>
-
+</thead>
+<tbody>
     {% for row in data %}
     <tr>
-        <td>{{ row[0] }}</td>
-        <td>{{ row[2] }}</td>
-        <td>{{ row[3] }}</td>
         <td>{{ row[4] }}</td>
+        <td>{{ row[3] }}</td>
+        <td class="text-danger fw-bold">{{ row[2] }}</td>
         <td>{{ row[5] }}</td>
 
         <td>
@@ -138,78 +397,10 @@
         </td>
     </tr>
     {% endfor %}
+</tbody>
 </table>
 </div>
 
-<div class="row mb-3">
-
-    <div class="col-md-6">
-        <div class="card p-3 shadow-sm">
-            <h5>💰 總支出</h5>
-            <h3 class="text-danger">{{ total }} 元</h3>
-        </div>
-    </div>
-        <div class="card p-3 mt-4 shadow-sm">
-
-        <h5>📊 個人消費分析</h5>
-
-        <ul class="list-group">
-
-            <li class="list-group-item">
-                消費筆數：{{ expense_count }} 筆
-            </li>
-
-            <li class="list-group-item">
-                平均消費：{{ avg_amount }} 元
-            </li>
-
-            <li class="list-group-item">
-                最高消費類別：{{ top_category }}
-            </li>
-
-            <li class="list-group-item">
-                最高消費月份：{{ top_month }}
-            </li>
-
-        </ul>
-
-    </div>
-
-    <div class="col-md-6">
-        <div class="card p-3 shadow-sm">
-            <h5>📊 分類統計</h5>
-
-            <ul class="list-group list-group-flush">
-                {% for category, amount in category_stats %}
-                <li class="list-group-item d-flex justify-content-between">
-                    <span>{{ category }}</span>
-                    <span>{{ amount }} 元</span>
-                </li>
-                {% endfor %}
-            </ul>
-
-        </div>
-    </div>
-
-</div>
-
-<div class="card p-3 mt-4 shadow-sm">
-    <h5>🏆 Top 3 消費類別</h5>
-
-    <ul class="list-group">
-        {% for category, total in top_categories %}
-        <li class="list-group-item d-flex justify-content-between">
-            <span>{{ category }}</span>
-            <span>{{ total }} 元</span>
-        </li>
-        {% endfor %}
-    </ul>
-</div>
-
-<div class="card p-3 mt-4 shadow-sm">
-    <h5>📈 消費類別分布</h5>
-    <canvas id="expenseChart"></canvas>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -239,10 +430,6 @@
     });
 </script>
 
-<div class="card p-3 mt-4 shadow-sm">
-    <h5>📈 每月消費趨勢</h5>
-    <canvas id="monthlyChart"></canvas>
-</div>
 <script>
     const monthLabels = [
         {% for month, amount in monthly_stats %}

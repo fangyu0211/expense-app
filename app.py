@@ -29,6 +29,15 @@ def init_db():
         )
     """)
 
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS budget (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            month TEXT,
+            budget_amount INTEGER
+        )
+        """)
+
     conn.commit()
     conn.close()
 
@@ -41,6 +50,10 @@ def index():
     
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
+    keyword = request.args.get("keyword")
+    category = request.args.get("category")
+    sort = request.args.get("sort")
+
     where_clause = "WHERE user_id=?"
     params = [session["user_id"]]
 
@@ -50,6 +63,25 @@ def index():
     if end_date:
         where_clause += " AND date <= ?"
         params.append(end_date)
+    # 關鍵字搜尋（搜尋備註）
+    if keyword:
+        where_clause += " AND note LIKE ?"
+        params.append(f"%{keyword}%")
+    if category and category != "全部":
+        where_clause += " AND category=?"
+        params.append(category)
+    order_clause = "ORDER BY id DESC"
+    if sort == "amount_desc":
+        order_clause = "ORDER BY amount DESC"
+
+    elif sort == "amount_asc":
+        order_clause = "ORDER BY amount ASC"
+
+    elif sort == "date_asc":
+        order_clause = "ORDER BY date ASC"
+
+    elif sort == "date_desc":
+        order_clause = "ORDER BY date DESC"
     
     conn = sqlite3.connect("expense.db")
     c = conn.cursor()
@@ -59,7 +91,7 @@ def index():
     SELECT *
     FROM expense
     {where_clause}
-    ORDER BY id DESC
+    {order_clause}
     """
     c.execute(query, params)
     data = c.fetchall()
@@ -161,6 +193,33 @@ def index():
         top_month = top_month[0]
     else:
         top_month = "無資料"
+
+    from datetime import datetime
+    current_month = datetime.now().strftime("%Y-%m")
+    c.execute("""
+    SELECT budget_amount
+    FROM budget
+    WHERE user_id=?
+    AND month=?
+    ORDER BY id DESC
+    LIMIT 1
+    """, (
+        session["user_id"],
+        current_month
+    ))
+    budget = c.fetchone()
+    if budget:
+        budget = budget[0]
+    else:
+        budget = 0 
+    if budget > 0:
+        budget_percent = min(
+            round(total / budget * 100),
+            100
+        )
+    else:
+        budget_percent = 0
+    
     conn.close()
 
     return render_template(
@@ -175,7 +234,12 @@ def index():
         top_month=top_month,
         top_categories=top_categories,
         start_date=start_date,
-        end_date=end_date
+        end_date=end_date,
+        budget=budget,
+        budget_percent=budget_percent,
+        keyword=keyword,
+        category=category,
+        sort=sort,
     )
 
 @app.route('/add', methods=['POST'])
@@ -353,6 +417,37 @@ def export():
         filename,
         as_attachment=True
     )
+
+@app.route("/budget", methods=["GET", "POST"])
+def budget():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    if request.method == "POST":
+
+        month = request.form["month"]
+        amount = request.form["amount"]
+
+        conn = sqlite3.connect("expense.db")
+        c = conn.cursor()
+
+        c.execute("""
+        INSERT INTO budget
+        (user_id, month, budget_amount)
+        VALUES (?, ?, ?)
+        """, (
+            session["user_id"],
+            month,
+            amount
+        ))
+
+        conn.commit()
+        conn.close()
+
+        return redirect("/")
+
+    return render_template("budget.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
