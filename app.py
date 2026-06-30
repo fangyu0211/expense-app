@@ -119,6 +119,40 @@ def index():
     """
     c.execute(query, params)
     category_stats = c.fetchall()
+    analysis = []
+
+    if total > 0:
+        # 找最大支出
+        top = max(category_stats, key=lambda x: x[1])
+        percent = round(top[1] / total * 100, 1)
+        analysis.append(
+            f"本月最高支出為「{top[0]}」，共 {top[1]} 元，占總支出的 {percent}% 。"
+        )
+        if top[0] == "飲食":
+            analysis.append(
+                "建議減少外食次數，可有效降低每月支出。"
+            )
+        elif top[0] == "娛樂":
+            analysis.append(
+                "娛樂支出較高，可適度控制非必要消費。"
+            )
+        elif top[0] == "購物":
+            analysis.append(
+                "購物支出偏高，建議規劃購物預算。"
+            )
+        elif top[0] == "交通":
+            analysis.append(
+                "交通支出最高"
+            )
+        if total > 10000:
+            analysis.append(
+                "本月總支出已超過 10,000 元，建議檢視預算配置。"
+            )
+
+        elif total < 3000:
+            analysis.append(
+                "本月支出控制得不錯，繼續保持!"
+            )
 
     c.execute(f"""
     SELECT category, SUM(amount) as total
@@ -242,6 +276,7 @@ def index():
         keyword=keyword,
         category=category,
         sort=sort,
+        analysis=analysis,
     )
 
 @app.route('/add', methods=['POST'])
